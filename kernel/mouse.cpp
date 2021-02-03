@@ -8,7 +8,7 @@
 #include "task.hpp"
 
 namespace {
-  const char mouse_cursor_shape[kMouseCursorHeight][kMouseCursorWidth + 1] = {
+  const char mouse_cursor_shape[kMouseCursorType][kMouseCursorHeight][kMouseCursorWidth + 1] = {{
     "@              ",
     "@@             ",
     "@.@            ",
@@ -33,7 +33,32 @@ namespace {
     "@       @.@    ",
     "         @.@   ",
     "         @@@   ",
-  };
+  }, {
+    "@@@@@@@@@@@@@@@",
+    "@.............@",
+    "@@@@@@@.@@@@@@@",
+    "      @.@      ",
+    "      @.@      ",
+    "      @.@      ",
+    "      @.@      ",
+    "      @.@      ",
+    "      @.@      ",
+    "      @.@      ",
+    "      @.@      ",
+    "      @.@      ",
+    "      @.@      ",
+    "      @.@      ",
+    "      @.@      ",
+    "      @.@      ",
+    "      @.@      ",
+    "      @.@      ",
+    "      @.@      ",
+    "      @.@      ",
+    "      @.@      ",
+    "@@@@@@@.@@@@@@@",
+    "@.............@",
+    "@@@@@@@@@@@@@@@",
+  }};
 
   void SendMouseMessage(Vector2D<int> newpos, Vector2D<int> posdiff,
                         uint8_t buttons, uint8_t previous_buttons) {
@@ -75,12 +100,12 @@ namespace {
   }
 }
 
-void DrawMouseCursor(PixelWriter* pixel_writer, Vector2D<int> position) {
+void DrawMouseCursor(PixelWriter* pixel_writer, Vector2D<int> position, int type) {
   for (int dy = 0; dy < kMouseCursorHeight; ++dy) {
     for (int dx = 0; dx < kMouseCursorWidth; ++dx) {
-      if (mouse_cursor_shape[dy][dx] == '@') {
+      if (mouse_cursor_shape[type][dy][dx] == '@') {
         pixel_writer->Write(position + Vector2D<int>{dx, dy}, {0, 0, 0});
-      } else if (mouse_cursor_shape[dy][dx] == '.') {
+      } else if (mouse_cursor_shape[type][dy][dx] == '.') {
         pixel_writer->Write(position + Vector2D<int>{dx, dy}, {255, 255, 255});
       } else {
         pixel_writer->Write(position + Vector2D<int>{dx, dy}, kMouseTransparentColor);
@@ -139,7 +164,7 @@ void InitializeMouse() {
   auto mouse_window = std::make_shared<Window>(
       kMouseCursorWidth, kMouseCursorHeight, screen_config.pixel_format);
   mouse_window->SetTransparentColor(kMouseTransparentColor);
-  DrawMouseCursor(mouse_window->Writer(), {0, 0});
+  DrawMouseCursor(mouse_window->Writer(), {0, 0}, 0);
 
   auto mouse_layer_id = layer_manager->NewLayer()
     .SetWindow(mouse_window)

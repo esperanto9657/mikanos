@@ -108,6 +108,7 @@ class ActiveLayer {
  public:
   ActiveLayer(LayerManager& manager);
   void SetMouseLayer(unsigned int mouse_layer);
+  unsigned int GetMouseLayer();
   void Activate(unsigned int layer_id);
   unsigned int GetActive() const { return active_layer_; }
 

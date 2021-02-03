@@ -228,6 +228,10 @@ void ActiveLayer::SetMouseLayer(unsigned int mouse_layer) {
   mouse_layer_ = mouse_layer;
 }
 
+unsigned int ActiveLayer::GetMouseLayer() {
+  return mouse_layer_;
+}
+
 void ActiveLayer::Activate(unsigned int layer_id) {
   if (active_layer_ == layer_id) {
     return;
