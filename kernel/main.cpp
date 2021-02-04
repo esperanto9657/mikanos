@@ -195,7 +195,8 @@ extern "C" void KernelMainNewStack(
     auto text_window_position = layer_manager->FindLayer(text_window_layer_id)->GetPosition();
     auto text_window_size = text_window->Size();
     
-    if (auto mouse_layer = layer_manager->FindLayer(active_layer->GetMouseLayer()); text_window_position.x < mouse_layer->GetPosition().x && mouse_layer->GetPosition().x < text_window_position.x + text_window_size.x &&
+    if (auto mouse_layer = layer_manager->FindLayer(active_layer->GetMouseLayer()); active_layer->GetActive() == text_window_layer_id &&
+        text_window_position.x < mouse_layer->GetPosition().x && mouse_layer->GetPosition().x < text_window_position.x + text_window_size.x &&
         text_window_position.y + text_window->kTopLeftMargin.y < mouse_layer->GetPosition().y && mouse_layer->GetPosition().y < text_window_position.y + text_window_size.y) {
       DrawMouseCursor(mouse_layer->GetWindow()->Writer(), {0, 0}, 1);
       layer_manager->Draw(active_layer->GetMouseLayer());
