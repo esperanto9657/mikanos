@@ -107,3 +107,13 @@ void FrameBuffer::Move(Vector2D<int> dst_pos, const Rectangle<int>& src) {
     }
   }
 }
+
+void FrameBuffer::SetConfig(int width, int height) {
+  config_.horizontal_resolution = width;
+  config_.vertical_resolution = height;
+  const auto bytes_per_pixel = BytesPerPixel(config_.pixel_format);
+  buffer_.resize(
+      bytes_per_pixel
+      * config_.horizontal_resolution * config_.vertical_resolution);
+  config_.frame_buffer = buffer_.data();
+}

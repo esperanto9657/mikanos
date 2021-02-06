@@ -6,6 +6,7 @@
 #include "layer.hpp"
 #include "usb/classdriver/mouse.hpp"
 #include "task.hpp"
+#include "logger.hpp"
 
 namespace {
   const char mouse_cursor_shape[kMouseCursorType][kMouseCursorHeight][kMouseCursorWidth + 1] = {{
@@ -58,6 +59,31 @@ namespace {
     "@@@@@@@.@@@@@@@",
     "@.............@",
     "@@@@@@@@@@@@@@@",
+  }, {
+    "       @       ",
+    "      @.@      ",
+    "     @...@     ",
+    "    @.....@    ",
+    "   @.......@   ",
+    "  @.........@  ",
+    " @...........@ ",
+    "@@@@@@@.@@@@@@@",
+    "      @.@      ",
+    "      @.@      ",
+    "      @.@      ",
+    "      @.@      ",
+    "      @.@      ",
+    "      @.@      ",
+    "      @.@      ",
+    "      @.@      ",
+    "@@@@@@@.@@@@@@@",
+    " @...........@ ",
+    "  @.........@  ",
+    "   @.......@   ",
+    "    @.....@    ",
+    "     @...@     ",
+    "      @.@      ",
+    "       @       ",
   }};
 
   void SendMouseMessage(Vector2D<int> newpos, Vector2D<int> posdiff,
@@ -140,12 +166,16 @@ void Mouse::OnInterrupt(uint8_t buttons, int8_t displacement_x, int8_t displacem
   
   if ((window->Title() == "Text Box Test" || window->Title() == "MikanTerm") &&
       window_position.x < position_.x && position_.x < window_position.x + window_size.x &&
-      window_position.y + ToplevelWindow::kTopLeftMargin.y < position_.y && position_.y < window_position.y + window_size.y - ToplevelWindow::kBottomRightMargin.y) {
+      window_position.y + ToplevelWindow::kTopLeftMargin.y < position_.y && position_.y < window_position.y + window_size.y - ToplevelWindow::kBottomRightMargin.y - (kMouseCursorHeight / 2)) {
     type_ = 1;
     DrawMouseCursor(mouse_layer->GetWindow()->Writer(), {0, 0}, type_);
     layer_manager->Draw(layer_id_);
   }
-  else if (type_ > 0) {
+  else if (window_position.y + window_size.y - ToplevelWindow::kBottomRightMargin.y - (kMouseCursorHeight / 2) <= position_.y && position_.y < window_position.y + window_size.y) {
+    type_ = 2;
+    DrawMouseCursor(mouse_layer->GetWindow()->Writer(), {0, 0}, type_);
+    layer_manager->Draw(layer_id_);
+  } else if (type_ > 0) {
     type_ = 0;
     DrawMouseCursor(mouse_layer->GetWindow()->Writer(), {0, 0}, type_);
     layer_manager->Draw(layer_id_);
@@ -157,8 +187,12 @@ void Mouse::OnInterrupt(uint8_t buttons, int8_t displacement_x, int8_t displacem
     auto layer = layer_manager->FindLayerByPosition(position_, layer_id_);
     if (layer && layer->IsDraggable()) {
       const auto y_layer = position_.y - layer->GetPosition().y;
-      if (y_layer < ToplevelWindow::kTopLeftMargin.y) {
+      auto layer_size = layer->GetWindow()->Size();
+      if (4 <= y_layer && y_layer < ToplevelWindow::kTopLeftMargin.y) {
         drag_layer_id_ = layer->ID();
+      }
+      if (layer_size.y - ToplevelWindow::kBottomRightMargin.y - (kMouseCursorHeight / 2) <= y_layer && y_layer < layer_size.y) {
+        bottom_resize_layer_id = layer->ID();
       }
       active_layer->Activate(layer->ID());
     } else {
@@ -168,8 +202,23 @@ void Mouse::OnInterrupt(uint8_t buttons, int8_t displacement_x, int8_t displacem
     if (drag_layer_id_ > 0) {
       layer_manager->MoveRelative(drag_layer_id_, posdiff);
     }
+    if (bottom_resize_layer_id > 0) {
+      auto bottom_resize_window = std::static_pointer_cast<std::shared_ptr<ToplevelWindow>::element_type>(layer_manager->FindLayer(bottom_resize_layer_id)->GetWindow());
+      auto previous_height = bottom_resize_window->Height();
+      bottom_resize_window->SetHeight(previous_height + posdiff.y);
+      DrawWindow(*bottom_resize_window->Writer(), bottom_resize_window->Title().c_str());
+      if (bottom_resize_window->Title() == "MikanTerm") {
+        DrawTerminal(*bottom_resize_window->InnerWriter(), {0, 0}, bottom_resize_window->InnerSize());
+      } else if (bottom_resize_window->Title() == "Text Box Test") {
+        DrawTextbox(*bottom_resize_window->InnerWriter(), {0, 0}, bottom_resize_window->InnerSize());
+      }
+      
+      //layer_manager->Draw(bottom_resize_layer_id);
+      layer_manager->Draw({{0, 0}, ScreenSize()});
+    }
   } else if (previous_left_pressed && !left_pressed) {
     drag_layer_id_ = 0;
+    bottom_resize_layer_id = 0;
   }
 
   if (drag_layer_id_ == 0) {

@@ -10,7 +10,7 @@
 
 #include "graphics.hpp"
 
-const int kMouseCursorType = 2;
+const int kMouseCursorType = 3;
 const int kMouseCursorWidth = 15;
 const int kMouseCursorHeight = 24;
 const PixelColor kMouseTransparentColor{0, 0, 1};
@@ -32,6 +32,7 @@ class Mouse {
   unsigned int type_{0};
 
   unsigned int drag_layer_id_{0};
+  unsigned int bottom_resize_layer_id{0};
   uint8_t previous_buttons_{0};
 };
 

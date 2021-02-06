@@ -65,6 +65,14 @@ class Window {
   int Height() const;
   /** @brief 平面描画領域のサイズをピクセル単位で返す。 */
   Vector2D<int> Size() const;
+  /** @brief 平面描画領域の横幅をピクセル単位で設定する。 */
+  void SetWidth(int width);
+  /** @brief 平面描画領域の高さをピクセル単位で設定する。 */
+  void SetHeight(int height);
+  /** @brief シャドウバッファのサイズを変更する。 */
+  void ResizeData(int width, int height);
+  /** @brief シャドウバッファのサイズを変更する。 */
+  void ResizeShodowBuffer(int width, int height);
 
   /** @brief このウィンドウの平面描画領域内で，矩形領域を移動する。
    *

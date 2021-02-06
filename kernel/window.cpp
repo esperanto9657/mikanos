@@ -95,6 +95,26 @@ Vector2D<int> Window::Size() const {
   return {width_, height_};
 }
 
+void Window::SetWidth(int width) {
+  width_ = width;
+  ResizeData(width_, height_);
+  ResizeShodowBuffer(width_, height_);
+}
+
+void Window::SetHeight(int height) {
+  height_ = height;
+  ResizeData(width_, height_);
+  ResizeShodowBuffer(width_, height_);
+}
+
+void Window::ResizeData(int width, int height) {
+  data_.resize(width * height);
+}
+
+void Window::ResizeShodowBuffer(int width, int height) {
+  shadow_buffer_.SetConfig(width, height);
+}
+
 void Window::Move(Vector2D<int> dst_pos, const Rectangle<int>& src) {
   shadow_buffer_.Move(dst_pos, src);
 }
@@ -156,7 +176,6 @@ void DrawWindow(PixelWriter& writer, const char* title) {
   fill_rect({2, 2},         {win_w - 4, win_h - 4}, 0xc6c6c6);
   fill_rect({1, win_h - 2}, {win_w - 2, 1},         0x848484);
   fill_rect({0, win_h - 1}, {win_w, 1},             0x000000);
-
   DrawWindowTitle(writer, title, false);
 }
 
