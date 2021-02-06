@@ -29,6 +29,7 @@ class Mouse {
  private:
   unsigned int layer_id_;
   Vector2D<int> position_{};
+  unsigned int type_{0};
 
   unsigned int drag_layer_id_{0};
   uint8_t previous_buttons_{0};

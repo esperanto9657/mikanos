@@ -170,7 +170,6 @@ extern "C" void KernelMainNewStack(
   // #@@range_end(init_app_loads)
 
   char str[128];
-  bool mouse_text_mode_flag = false;
 
   while (true) {
     __asm__("cli");
@@ -191,22 +190,6 @@ extern "C" void KernelMainNewStack(
     }
 
     __asm__("sti");
-
-    auto text_window_position = layer_manager->FindLayer(text_window_layer_id)->GetPosition();
-    auto text_window_size = text_window->Size();
-    
-    if (auto mouse_layer = layer_manager->FindLayer(active_layer->GetMouseLayer()); active_layer->GetActive() == text_window_layer_id &&
-        text_window_position.x < mouse_layer->GetPosition().x && mouse_layer->GetPosition().x < text_window_position.x + text_window_size.x &&
-        text_window_position.y + text_window->kTopLeftMargin.y < mouse_layer->GetPosition().y && mouse_layer->GetPosition().y < text_window_position.y + text_window_size.y) {
-      DrawMouseCursor(mouse_layer->GetWindow()->Writer(), {0, 0}, 1);
-      layer_manager->Draw(active_layer->GetMouseLayer());
-      mouse_text_mode_flag = true;
-    }
-    else if (mouse_text_mode_flag) {
-      DrawMouseCursor(mouse_layer->GetWindow()->Writer(), {0, 0}, 0);
-      layer_manager->Draw(active_layer->GetMouseLayer());
-      mouse_text_mode_flag = false;
-    }
 
     switch (msg->type) {
     case Message::kInterruptXHCI:

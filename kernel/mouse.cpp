@@ -132,6 +132,25 @@ void Mouse::OnInterrupt(uint8_t buttons, int8_t displacement_x, int8_t displacem
 
   layer_manager->Move(layer_id_, position_);
 
+  auto layer = layer_manager->FindLayerByPosition(position_, layer_id_);
+  auto window = std::static_pointer_cast<std::shared_ptr<ToplevelWindow>::element_type>(layer->GetWindow());
+  auto window_position = layer->GetPosition();
+  auto window_size = layer->GetWindow()->Size();
+  auto mouse_layer = layer_manager->FindLayer(layer_id_);
+  
+  if ((window->Title() == "Text Box Test" || window->Title() == "MikanTerm") &&
+      window_position.x < position_.x && position_.x < window_position.x + window_size.x &&
+      window_position.y + ToplevelWindow::kTopLeftMargin.y < position_.y && position_.y < window_position.y + window_size.y - ToplevelWindow::kBottomRightMargin.y) {
+    type_ = 1;
+    DrawMouseCursor(mouse_layer->GetWindow()->Writer(), {0, 0}, type_);
+    layer_manager->Draw(layer_id_);
+  }
+  else if (type_ > 0) {
+    type_ = 0;
+    DrawMouseCursor(mouse_layer->GetWindow()->Writer(), {0, 0}, type_);
+    layer_manager->Draw(layer_id_);
+  }
+
   const bool previous_left_pressed = (previous_buttons_ & 0x01);
   const bool left_pressed = (buttons & 0x01);
   if (!previous_left_pressed && left_pressed) {
