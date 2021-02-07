@@ -33,6 +33,7 @@ class Mouse {
 
   unsigned int drag_layer_id_{0};
   unsigned int bottom_resize_layer_id{0};
+  unsigned int top_resize_layer_id{0};
   uint8_t previous_buttons_{0};
 };
 

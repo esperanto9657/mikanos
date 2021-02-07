@@ -34,6 +34,7 @@ class Terminal {
   Rectangle<int> InputKey(uint8_t modifier, uint8_t keycode, char ascii);
 
   void Print(const char* s, std::optional<size_t> len = std::nullopt);
+  void ReDraw(Vector2D<int> posdiff);
 
  private:
   std::shared_ptr<ToplevelWindow> window_;

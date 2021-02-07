@@ -69,7 +69,7 @@ class Window {
   void SetWidth(int width);
   /** @brief 平面描画領域の高さをピクセル単位で設定する。 */
   void SetHeight(int height);
-  /** @brief シャドウバッファのサイズを変更する。 */
+  /** @brief データのサイズを変更する。 */
   void ResizeData(int width, int height);
   /** @brief シャドウバッファのサイズを変更する。 */
   void ResizeShodowBuffer(int width, int height);

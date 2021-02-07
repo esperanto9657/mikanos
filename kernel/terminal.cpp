@@ -12,6 +12,7 @@
 #include "paging.hpp"
 #include "timer.hpp"
 #include "keyboard.hpp"
+#include "logger.hpp"
 
 namespace {
 
@@ -557,6 +558,60 @@ void Terminal::Print(const char* s, std::optional<size_t> len) {
   __asm__("sti");
 }
 
+void Terminal::ReDraw(Vector2D<int> posdiff) {
+  auto layer_position = layer_manager->FindLayer(layer_id_)->GetPosition();
+  auto mouse_position = layer_manager->FindLayer(active_layer->GetMouseLayer())->GetPosition();
+  if (layer_position.y <= mouse_position.y && mouse_position.y < layer_position.y + ToplevelWindow::kTopLeftMargin.y) {
+    if (window_->Height() - posdiff.y > CalcCursorPos().y + 16 + ToplevelWindow::kBottomRightMargin.y) {
+      window_->SetHeight(window_->Height() - posdiff.y);
+      const auto win_w = window_->Width();
+      const auto win_h = window_->Height();
+      auto writer = *window_->Writer();
+      auto fill_rect = [&writer](Vector2D<int> pos, Vector2D<int> size, uint32_t c) {
+        FillRectangle(writer, pos, size, ToColor(c));
+      };
+
+      fill_rect({0, 0},         {1, win_h},             0xc6c6c6);
+      fill_rect({1, 1},         {1, win_h - 2},         0xffffff);
+      fill_rect({win_w - 2, 1}, {1, win_h - 2},         0x848484);
+      fill_rect({win_w - 1, 0}, {1, win_h},             0x000000);
+      fill_rect({2, CalcCursorPos().y + 16}, {win_w - 4, win_h - CalcCursorPos().y - 18}, 0xc6c6c6);
+      fill_rect({1, win_h - 2}, {win_w - 2, 1},         0x848484);
+      fill_rect({0, win_h - 1}, {win_w, 1},             0x000000);
+      // fill main box
+      fill_rect({5, CalcCursorPos().y + 16}, {win_w - 10, win_h - CalcCursorPos().y - 21}, 0x000000);
+      // draw border lines
+      fill_rect({4, 24},        {1, win_h - 28},        0x848484);
+      fill_rect({4, win_h - 4}, {win_w - 8, 1},         0xc6c6c6);
+      fill_rect({win_w - 4, 24},{1, win_h - 28},        0xc6c6c6);
+      layer_manager->MoveRelative(layer_id_, {0, posdiff.y});
+    }
+  } else if (window_->Height() + posdiff.y > CalcCursorPos().y + 16 + ToplevelWindow::kBottomRightMargin.y) {
+    window_->SetHeight(window_->Height() + posdiff.y);
+    const auto win_w = window_->Width();
+    const auto win_h = window_->Height();
+    auto writer = *window_->Writer();
+    auto fill_rect = [&writer](Vector2D<int> pos, Vector2D<int> size, uint32_t c) {
+      FillRectangle(writer, pos, size, ToColor(c));
+    };
+
+    fill_rect({0, 0},         {1, win_h},             0xc6c6c6);
+    fill_rect({1, 1},         {1, win_h - 2},         0xffffff);
+    fill_rect({win_w - 2, 1}, {1, win_h - 2},         0x848484);
+    fill_rect({win_w - 1, 0}, {1, win_h},             0x000000);
+    fill_rect({2, CalcCursorPos().y + 16}, {win_w - 4, win_h - CalcCursorPos().y - 18}, 0xc6c6c6);
+    fill_rect({1, win_h - 2}, {win_w - 2, 1},         0x848484);
+    fill_rect({0, win_h - 1}, {win_w, 1},             0x000000);
+    // fill main box
+    fill_rect({5, CalcCursorPos().y + 16}, {win_w - 10, win_h - CalcCursorPos().y - 21}, 0x000000);
+    // draw border lines
+    fill_rect({4, 24},        {1, win_h - 28},        0x848484);
+    fill_rect({4, win_h - 4}, {win_w - 8, 1},         0xc6c6c6);
+    fill_rect({win_w - 4, 24},{1, win_h - 28},        0xc6c6c6);
+  }
+  layer_manager->Draw(layer_id_);
+}
+
 Rectangle<int> Terminal::HistoryUpDown(int direction) {
   if (direction == -1 && cmd_history_index_ >= 0) {
     --cmd_history_index_;
@@ -650,6 +705,9 @@ void TaskTerminal(uint64_t task_id, int64_t data) {
       break;
     case Message::kWindowActive:
       window_isactive = msg->arg.window_active.activate;
+      break;
+    case Message::kMouseMove:
+      terminal->ReDraw({msg->arg.mouse_move.dx, msg->arg.mouse_move.dy});
       break;
     default:
       break;

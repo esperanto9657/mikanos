@@ -164,15 +164,15 @@ void Mouse::OnInterrupt(uint8_t buttons, int8_t displacement_x, int8_t displacem
   auto window_size = layer->GetWindow()->Size();
   auto mouse_layer = layer_manager->FindLayer(layer_id_);
   
-  if ((window->Title() == "Text Box Test" || window->Title() == "MikanTerm") &&
+  if (((window_position.y + window_size.y - ToplevelWindow::kBottomRightMargin.y - (kMouseCursorHeight / 2) <= position_.y && position_.y < window_position.y + window_size.y) ||
+           (window_position.y <= position_.y && position_.y < window_position.y + 4)) && window->Title() == "MikanTerm") {
+    type_ = 2;
+    DrawMouseCursor(mouse_layer->GetWindow()->Writer(), {0, 0}, type_);
+    layer_manager->Draw(layer_id_);
+  } else if ((window->Title() == "Text Box Test" || window->Title() == "MikanTerm") &&
       window_position.x < position_.x && position_.x < window_position.x + window_size.x &&
       window_position.y + ToplevelWindow::kTopLeftMargin.y < position_.y && position_.y < window_position.y + window_size.y - ToplevelWindow::kBottomRightMargin.y - (kMouseCursorHeight / 2)) {
     type_ = 1;
-    DrawMouseCursor(mouse_layer->GetWindow()->Writer(), {0, 0}, type_);
-    layer_manager->Draw(layer_id_);
-  }
-  else if (window_position.y + window_size.y - ToplevelWindow::kBottomRightMargin.y - (kMouseCursorHeight / 2) <= position_.y && position_.y < window_position.y + window_size.y) {
-    type_ = 2;
     DrawMouseCursor(mouse_layer->GetWindow()->Writer(), {0, 0}, type_);
     layer_manager->Draw(layer_id_);
   } else if (type_ > 0) {
@@ -184,15 +184,15 @@ void Mouse::OnInterrupt(uint8_t buttons, int8_t displacement_x, int8_t displacem
   const bool previous_left_pressed = (previous_buttons_ & 0x01);
   const bool left_pressed = (buttons & 0x01);
   if (!previous_left_pressed && left_pressed) {
-    auto layer = layer_manager->FindLayerByPosition(position_, layer_id_);
     if (layer && layer->IsDraggable()) {
-      const auto y_layer = position_.y - layer->GetPosition().y;
+      const auto y_layer = position_.y - window_position.y;
       auto layer_size = layer->GetWindow()->Size();
-      if (4 <= y_layer && y_layer < ToplevelWindow::kTopLeftMargin.y) {
-        drag_layer_id_ = layer->ID();
-      }
-      if (layer_size.y - ToplevelWindow::kBottomRightMargin.y - (kMouseCursorHeight / 2) <= y_layer && y_layer < layer_size.y) {
+      if (layer_size.y - ToplevelWindow::kBottomRightMargin.y - (kMouseCursorWidth / 2) <= y_layer && y_layer < layer_size.y) {
         bottom_resize_layer_id = layer->ID();
+      } else if (0 <= y_layer && y_layer < 4) {
+        top_resize_layer_id = layer->ID();
+      } else if (4 <= y_layer && y_layer < ToplevelWindow::kTopLeftMargin.y) {
+        drag_layer_id_ = layer->ID();
       }
       active_layer->Activate(layer->ID());
     } else {
@@ -204,25 +204,26 @@ void Mouse::OnInterrupt(uint8_t buttons, int8_t displacement_x, int8_t displacem
     }
     if (bottom_resize_layer_id > 0) {
       auto bottom_resize_window = std::static_pointer_cast<std::shared_ptr<ToplevelWindow>::element_type>(layer_manager->FindLayer(bottom_resize_layer_id)->GetWindow());
-      auto previous_height = bottom_resize_window->Height();
-      bottom_resize_window->SetHeight(previous_height + posdiff.y);
-      DrawWindow(*bottom_resize_window->Writer(), bottom_resize_window->Title().c_str());
       if (bottom_resize_window->Title() == "MikanTerm") {
-        DrawTerminal(*bottom_resize_window->InnerWriter(), {0, 0}, bottom_resize_window->InnerSize());
-      } else if (bottom_resize_window->Title() == "Text Box Test") {
-        DrawTextbox(*bottom_resize_window->InnerWriter(), {0, 0}, bottom_resize_window->InnerSize());
+        SendMouseMessage(newpos, posdiff, buttons, previous_buttons_);
+        layer_manager->Draw({{0, 0}, ScreenSize()});
       }
-      
-      //layer_manager->Draw(bottom_resize_layer_id);
-      layer_manager->Draw({{0, 0}, ScreenSize()});
+    }
+    if (top_resize_layer_id > 0) {
+      auto top_resize_window = std::static_pointer_cast<std::shared_ptr<ToplevelWindow>::element_type>(layer_manager->FindLayer(top_resize_layer_id)->GetWindow());
+      if (top_resize_window->Title() == "MikanTerm") {
+        SendMouseMessage(newpos, posdiff, buttons, previous_buttons_);
+        layer_manager->Draw({{0, 0}, ScreenSize()});
+      }
     }
   } else if (previous_left_pressed && !left_pressed) {
     drag_layer_id_ = 0;
     bottom_resize_layer_id = 0;
+    top_resize_layer_id = 0;
   }
 
   if (drag_layer_id_ == 0) {
-    SendMouseMessage(newpos, posdiff, buttons, previous_buttons_);
+    //SendMouseMessage(newpos, posdiff, buttons, previous_buttons_);
   }
 
   previous_buttons_ = buttons;
@@ -231,6 +232,7 @@ void Mouse::OnInterrupt(uint8_t buttons, int8_t displacement_x, int8_t displacem
 void InitializeMouse() {
   auto mouse_window = std::make_shared<Window>(
       kMouseCursorWidth, kMouseCursorHeight, screen_config.pixel_format);
+  
   mouse_window->SetTransparentColor(kMouseTransparentColor);
   DrawMouseCursor(mouse_window->Writer(), {0, 0}, 0);
 
